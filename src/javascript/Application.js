@@ -6,8 +6,6 @@ import * as dat from 'dat.gui'
 import Sizes from './Utils/Sizes.js'
 import Time from './Utils/Time.js'
 
-import sunTexture from '/assets/textures/sun.jpg';
-
 export default class Application
 {
     /**
@@ -26,27 +24,87 @@ export default class Application
         // Load resources
         this.resources = {}
 
-        this.resources.searchImage = new Image()
-        this.resources.searchImage.addEventListener('load', () =>
-        {
-            this.resources.areaImage = new Image()
-            this.resources.areaImage.addEventListener('load', () =>
+        const textures = [
             {
-                /*this.tdsLoader.load('suzanne.3ds', (_suzanne) =>
-                {
-                    this.resources.suzanne = _suzanne.children[0]
-
-                    // Set environment
-                    this.setEnvironment()
-
-                    // Set debug
-                    this.setDebug()
-                })*/
-            })
-            this.resources.areaImage.src = SMAAEffect.areaImageDataURL
-        })
-        this.resources.searchImage.src = SMAAEffect.searchImageDataURL
+                id: "sunTexture",
+                url: "/assets/textures/sun.jpg"
+            },
+        ]
+        this.loadTextures(textures, this.setEnvironment)
     }
+
+    /**
+     * Image Loader for textures
+     */
+    loadTextures(textures, callback) {
+        console.log('loading textures')
+        let count = 0
+        let target = textures.length
+        for (let i = 0; i < textures.length; i++) {
+            // create url dependency
+            const base = 'http://localhost:1234'
+            let imgURL = new URL(textures[i].url, base)
+            // load the texture using three's loader
+            let loader = new THREE.TextureLoader()
+            console.log(imgURL)
+            loader.load(imgURL, (texture) => {
+                    count++
+                    console.log(`loaded texture ${textures[i].id} (#${count})`)
+                    this.resources[textures[i].id] = texture
+                    if (count === target) {
+                        console.log('finished loading textures')
+                        callback()
+                    }
+                }, () => {}, (error) => {
+                    console.error(error)
+                }
+            )
+        }
+    }
+
+
+    /**
+     * Planet Generation
+     */
+    createPlanet(size, texture, position, ring) {
+        const geo = new THREE.SphereGeometry(size, 30, 30);
+        const mat = new THREE.MeshStandardMaterial({
+            map: textureLoader.load(texture)
+        });
+        const mesh = new THREE.Mesh(geo, mat);
+        const obj = new THREE.Object3D();
+        obj.add(mesh);
+        if(ring) {
+            const ringGeo = new THREE.RingGeometry(
+                ring.innerRadius,
+                ring.outerRadius,
+                32);
+            const ringMat = new THREE.MeshBasicMaterial({
+                map: textureLoader.load(ring.texture),
+                side: THREE.DoubleSide
+            });
+            const ringMesh = new THREE.Mesh(ringGeo, ringMat);
+            obj.add(ringMesh);
+            ringMesh.position.x = position;
+            ringMesh.rotation.x = -0.5 * Math.PI;
+        }
+        this.scene.add(obj);
+        mesh.position.x = position;
+        return {mesh, obj}
+    }
+    createSun() {
+        const textureLoader = new THREE.TextureLoader();
+        const sunGeo = new THREE.SphereGeometry(16, 30, 30);
+        const sunMat = new THREE.MeshBasicMaterial({
+            map: this.sunTexture
+        });
+        const sun = new THREE.Mesh(sunGeo, sunMat);
+        this.scene.add(sun);
+
+        const pointLight = new THREE.PointLight(0xFFFFFF, 2, 300);
+        this.scene.add(pointLight);
+    }
+
 
     /**
      * Set environments
@@ -62,40 +120,21 @@ export default class Application
         this.renderer.setSize(this.sizes.viewport.width, this.sizes.viewport.height)
 
         // Camera
-        /*this.camera = new THREE.PerspectiveCamera(75, this.sizes.viewport.width / this.sizes.viewport.height, 1, 100)
-        this.camera.position.set(0, 1, -3)
-        this.camera.lookAt(new THREE.Vector3())
-        this.scene.add(this.camera)*/
         this.camera = new THREE.PerspectiveCamera(
-            45,
-            window.innerWidth / window.innerHeight,
-            0.1,
-            1000
+            45, // fov
+            window.innerWidth / window.innerHeight, // aspect ratio
+            0.1, // near clipping cutoff
+            1000 // far clipping cutoff
         );
-
         this.camera.position.set(-90, 140, 140);
 
         // Controls
         this.controls = new OrbitControls(this.camera, this.$canvas)
         this.controls.update()
 
-        // Suzanne
-        /*this.resources.suzanne.geometry.rotateX(- Math.PI * 0.5)
-        this.resources.suzanne.geometry.rotateY(Math.PI)
-        this.suzanne = new THREE.Mesh(this.resources.suzanne.geometry, new THREE.MeshNormalMaterial())
-        this.scene.add(this.suzanne)*/
-
-        const textureLoader = new THREE.TextureLoader();
-
-        const sunGeo = new THREE.SphereGeometry(16, 30, 30);
-        const sunMat = new THREE.MeshBasicMaterial({
-            map: textureLoader.load(sunTexture)
-        });
-        const sun = new THREE.Mesh(sunGeo, sunMat);
-        this.scene.add(sun);
-
-        const pointLight = new THREE.PointLight(0xFFFFFF, 2, 300);
-        this.scene.add(pointLight);
+        // Sun
+        this.createSun()
+        
 
         // Composer
         this.composer = new EffectComposer(this.renderer, { depthTexture: true })
@@ -137,8 +176,6 @@ export default class Application
         // Time tick
         this.time.on('tick', () =>
         {
-            //this.suzanne.rotation.y += 0.01
-
             // Renderer
             if(this.useComposer)
             {

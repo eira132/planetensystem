@@ -2,7 +2,7 @@
 dist/
 
 # Parcel cache
-.cache
+.parcel-cache
 
 # vscode directories
 .vscode

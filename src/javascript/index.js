@@ -5,6 +5,7 @@ window.application = new Application({
     useComposer: true
 })
 
+// for fast web development
 if(module.hot)
 {
     module.hot.dispose(() =>

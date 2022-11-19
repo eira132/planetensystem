@@ -30,6 +30,7 @@
     "parcel": "^2.8.0",
     "parcel-plugin-asset-copier": "^1.1.1",
     "postprocessing": "^6.29.1",
+    "process": "^0.11.10",
     "shx": "^0.3.4",
     "three": "^0.146.0"
   },
