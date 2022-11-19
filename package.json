@@ -1,37 +1,37 @@
 {
   "name": "planetensystem",
   "version": "1.0.0",
-  "description": "This project was bootstrapped with Fastify-CLI.",
-  "main": "app.js",
-  "directories": {
-    "test": "test"
-  },
+  "description": "Eine Web Darstellung eines Planetensystems",
   "scripts": {
-    "test": "tap \"test/**/*.test.js\"",
-    "start": "fastify start -l info app.js",
-    "dev": "fastify start -w -l info -P app.js"
+    "predev": "npm run clean",
+    "dev": "parcel src/index.html -p 1234 --open",
+    "prebuild": "npm run clean",
+    "build": "parcel build src/index.html --dist-dir ./dist --public-url . --detailed-report",
+    "clean": "shx rm -rf dist",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/baldur132/planetensystem.git"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "baldur132",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/baldur132/planetensystem/issues"
   },
   "homepage": "https://github.com/baldur132/planetensystem#readme",
   "dependencies": {
-    "@fastify/autoload": "^5.0.0",
-    "@fastify/sensible": "^4.1.0",
-    "@fastify/static": "^6.5.0",
-    "fastify": "^4.0.0",
-    "fastify-cli": "^4.4.0",
-    "fastify-plugin": "^3.0.0",
+    "dat.gui": "^0.7.9",
+    "postprocessing": "^6.29.1",
     "three": "^0.146.0"
   },
   "devDependencies": {
-    "tap": "^16.1.0"
-  }
+    "dat.gui": "^0.7.9",
+    "parcel": "^2.8.0",
+    "parcel-plugin-asset-copier": "^1.1.1",
+    "postprocessing": "^6.29.1",
+    "shx": "^0.3.4",
+    "three": "^0.146.0"
+  },
+  "assetsPath": "assets"
 }

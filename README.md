@@ -1,23 +1,25 @@
-# Getting Started with [Fastify-CLI](https://www.npmjs.com/package/fastify-cli)
-This project was bootstrapped with Fastify-CLI.
+# Planetensystem
+**Gruppenmitglieder:** Baldur Siegel, Jannik Herzner, Jonas Straub
 
-## Available Scripts
+## Beschreibung
+Eine Web-Applikation die ein Modell eines Planetensystems darstellt.
 
-In the project directory, you can run:
+## Technologien
+ - [Node.js](https://nodejs.org/en/)
+ - [Parcel](https://www.npmjs.com/package/parcel)
+ - [Three.js](https://threejs.org/)
 
-### `npm run dev`
+## Setup
+[Node.js](https://nodejs.org/en/download/) installieren.
+Folgende Kommandos ausführen:
 
-To start the app in dev mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+``` bash
+# Dependencies installieren (only for first time)
+npm i
 
-### `npm start`
+# Development Server starten bei localhost:1234
+npm run dev
 
-For production mode
-
-### `npm run test`
-
-Run the test cases.
-
-## Learn More
-
-To learn Fastify, check out the [Fastify documentation](https://www.fastify.io/docs/latest/).
+# Build for production in the dist/ directory
+npm run build
+```
