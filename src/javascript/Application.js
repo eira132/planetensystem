@@ -24,42 +24,91 @@ export default class Application
         // Load resources
         this.resources = {}
 
-        const textures = [
+        const textureList = [
             {
                 id: "sunTexture",
-                url: "/assets/textures/sun.jpg"
+                url: "textures/sun.jpg"
             },
+            {
+                id: "mercuryTexture",
+                url: "textures/mercury.jpg"
+            },
+            {
+                id: "venusTexture",
+                url: "textures/venus.jpg"
+            },
+            {
+                id: "earthTexture",
+                url: "textures/earth.jpg"
+            },
+            {
+                id: "marsTexture",
+                url: "textures/mars.jpg"
+            },
+            {
+                id: "jupiterTexture",
+                url: "textures/jupiter.jpg"
+            },
+            {
+                id: "saturnTexture",
+                url: "textures/saturn.jpg"
+            },
+            {
+                id: "saturnRingTexture",
+                url: "textures/saturn ring.png"
+            },
+            {
+                id: "uranusTexture",
+                url: "textures/uranus.jpg"
+            },
+            {
+                id: "uranusRingTexture",
+                url: "textures/uranus ring.png"
+            },
+            {
+                id: "neptuneTexture",
+                url: "textures/neptune.jpg"
+            },
+            {
+                id: "plutoTexture",
+                url: "textures/pluto.jpg"
+            }
         ]
-        this.loadTextures(textures, this.setEnvironment)
+        this.loadTextures(textureList).then((value) => {
+            this.resources.textures = value
+            this.setEnvironment()
+        }).catch((error) => {
+            console.error(error)
+        })
     }
 
     /**
      * Image Loader for textures
      */
-    loadTextures(textures, callback) {
-        console.log('loading textures')
-        let count = 0
-        let target = textures.length
-        for (let i = 0; i < textures.length; i++) {
-            // create url dependency
-            const base = 'http://localhost:1234'
-            let imgURL = new URL(textures[i].url, base)
-            // load the texture using three's loader
-            let loader = new THREE.TextureLoader()
-            console.log(imgURL)
-            loader.load(imgURL, (texture) => {
-                    count++
-                    console.log(`loaded texture ${textures[i].id} (#${count})`)
-                    this.resources[textures[i].id] = texture
-                    if (count === target) {
-                        console.log('finished loading textures')
-                        callback()
+    loadTextures(list) {
+        return new Promise((resolve, reject) => {
+            console.log('loading textures')
+            let textures = {}
+            let count = 0
+            let target = list.length
+            for (let i = 0; i < list.length; i++) {
+                // create url dependency
+                const base = 'http://localhost:1234'
+                let imgURL = new URL(list[i].url, base)
+                // load the texture using three's loader
+                let loader = new THREE.TextureLoader()
+                loader.load(imgURL, (texture) => {
+                        count++
+                        textures[list[i].id] = texture
+                        if (count === target) {
+                            resolve(textures)
+                        }
+                    }, () => {}, (error) => {
+                        reject(error)
                     }
-                }, () => {}, (error) => {
-                    console.error(error)
-                }
-            )
-        }
+                )
+            }
+        })
     }
 
 
@@ -69,7 +118,7 @@ export default class Application
     createPlanet(size, texture, position, ring) {
         const geo = new THREE.SphereGeometry(size, 30, 30);
         const mat = new THREE.MeshStandardMaterial({
-            map: textureLoader.load(texture)
+            map: texture
         });
         const mesh = new THREE.Mesh(geo, mat);
         const obj = new THREE.Object3D();
@@ -80,7 +129,7 @@ export default class Application
                 ring.outerRadius,
                 32);
             const ringMat = new THREE.MeshBasicMaterial({
-                map: textureLoader.load(ring.texture),
+                map: ring.texture,
                 side: THREE.DoubleSide
             });
             const ringMesh = new THREE.Mesh(ringGeo, ringMat);
@@ -92,17 +141,45 @@ export default class Application
         mesh.position.x = position;
         return {mesh, obj}
     }
+    generateStandardPlanets() {
+        const mercury = this.createPlanet(3.2, this.resources.textures.mercuryTexture, 28);
+        const venus = this.createPlanet(5.8, this.resources.textures.venusTexture, 44);
+        const earth = this.createPlanet(6, this.resources.textures.earthTexture, 62);
+        const mars = this.createPlanet(4, this.resources.textures.marsTexture, 78);
+        const jupiter = this.createPlanet(12, this.resources.textures.jupiterTexture, 100);
+        const saturn = this.createPlanet(10, this.resources.textures.saturnTexture, 138, {
+            innerRadius: 10,
+            outerRadius: 20,
+            texture: this.resources.textures.saturnRingTexture
+        });
+        const uranus = this.createPlanet(7, this.resources.textures.uranusTexture, 176, {
+            innerRadius: 7,
+            outerRadius: 12,
+            texture: this.resources.textures.uranusRingTexture
+        });
+        const neptune = this.createPlanet(7, this.resources.textures.neptuneTexture, 200);
+        const pluto = this.createPlanet(2.8, this.resources.textures.plutoTexture, 216);
+        return {
+            mercury: mercury,
+            venus: venus,
+            earth: earth,
+            mars: mars,
+            jupiter: jupiter,
+            saturn: saturn,
+            uranus: uranus,
+            neptune: neptune,
+            pluto: pluto
+        }
+    }
     createSun() {
         const textureLoader = new THREE.TextureLoader();
         const sunGeo = new THREE.SphereGeometry(16, 30, 30);
         const sunMat = new THREE.MeshBasicMaterial({
-            map: this.sunTexture
+            map: this.resources.textures.sunTexture
         });
         const sun = new THREE.Mesh(sunGeo, sunMat);
         this.scene.add(sun);
-
-        const pointLight = new THREE.PointLight(0xFFFFFF, 2, 300);
-        this.scene.add(pointLight);
+        return sun
     }
 
 
@@ -132,9 +209,14 @@ export default class Application
         this.controls = new OrbitControls(this.camera, this.$canvas)
         this.controls.update()
 
+        // Planets
+        this.planets = this.generateStandardPlanets()
         // Sun
-        this.createSun()
-        
+        this.planets.sun = this.createSun()
+
+        // Lighting
+        const pointLight = new THREE.PointLight(0xFFFFFF, 2, 300);
+        this.scene.add(pointLight);
 
         // Composer
         this.composer = new EffectComposer(this.renderer, { depthTexture: true })
@@ -180,6 +262,29 @@ export default class Application
             if(this.useComposer)
             {
                 this.composer.render(this.scene, this.camera)
+
+                //Self-rotation
+                this.planets.sun.rotateY(0.004);
+                this.planets.mercury.mesh.rotateY(0.004);
+                this.planets.venus.mesh.rotateY(0.002);
+                this.planets.earth.mesh.rotateY(0.02);
+                this.planets.mars.mesh.rotateY(0.018);
+                this.planets.jupiter.mesh.rotateY(0.04);
+                this.planets.saturn.mesh.rotateY(0.038);
+                this.planets.uranus.mesh.rotateY(0.03);
+                this.planets.neptune.mesh.rotateY(0.032);
+                this.planets.pluto.mesh.rotateY(0.008);
+
+                //Around-sun-rotation
+                this.planets.mercury.obj.rotateY(0.04);
+                this.planets.venus.obj.rotateY(0.015);
+                this.planets.earth.obj.rotateY(0.01);
+                this.planets.mars.obj.rotateY(0.008);
+                this.planets.jupiter.obj.rotateY(0.002);
+                this.planets.saturn.obj.rotateY(0.0009);
+                this.planets.uranus.obj.rotateY(0.0004);
+                this.planets.neptune.obj.rotateY(0.0001);
+                this.planets.pluto.obj.rotateY(0.00007);
             }
             else
             {
