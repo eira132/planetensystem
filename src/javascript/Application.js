@@ -1,6 +1,6 @@
 import * as THREE from 'three'
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { EffectComposer, RenderPass, EffectPass, SMAAEffect } from 'postprocessing'
+import { EffectComposer, RenderPass, EffectPass, SMAAEffect, BloomEffect, GodRaysEffect, KernelSize } from 'postprocessing'
 import * as dat from 'dat.gui'
 
 import Sizes from './Utils/Sizes.js'
@@ -172,13 +172,24 @@ export default class Application
         }
     }
     createSun() {
-        const textureLoader = new THREE.TextureLoader();
-        const sunGeo = new THREE.SphereGeometry(16, 30, 30);
+        /*const sunGeo = new THREE.SphereGeometry(16, 30, 30);
         const sunMat = new THREE.MeshBasicMaterial({
             map: this.resources.textures.sunTexture
         });
         const sun = new THREE.Mesh(sunGeo, sunMat);
-        this.scene.add(sun);
+        this.scene.add(sun);*/
+
+		const sunMaterial = new THREE.MeshBasicMaterial({
+			color: 0xffddaa,
+			transparent: true,
+			fog: false
+		});
+
+		const sunGeometry = new THREE.SphereBufferGeometry(16, 32, 32);
+		const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+		sun.frustumCulled = false;
+		sun.matrixAutoUpdate = false;
+
         return sun
     }
 
@@ -215,8 +226,38 @@ export default class Application
         this.planets.sun = this.createSun()
 
         // Lighting
-        const pointLight = new THREE.PointLight(0xFFFFFF, 2, 300);
-        this.scene.add(pointLight);
+        /*const pointLight = new THREE.PointLight(0xFFFFFF, 2, 300)
+        this.scene.add(pointLight)*/
+
+		const ambientLight = new THREE.AmbientLight(0x101010);
+
+		const mainLight = new THREE.PointLight(0xffe3b1);
+		mainLight.position.set(-0.5, 3, -0.25);
+		mainLight.castShadow = true;
+		mainLight.shadow.bias = 0.0000125;
+		mainLight.shadow.mapSize.width = 2048;
+		mainLight.shadow.mapSize.height = 2048;
+
+		if (window.innerWidth < 720) {
+
+			mainLight.shadow.mapSize.width = 512;
+			mainLight.shadow.mapSize.height = 512;
+
+		} else if (window.innerWidth < 1280) {
+
+			mainLight.shadow.mapSize.width = 1024;
+			mainLight.shadow.mapSize.height = 1024;
+
+		}
+
+		this.light = mainLight;
+		this.scene.add(ambientLight, mainLight);
+
+		// Using a group here to check if matrix updates work correctly.
+		const group = new THREE.Group();
+		group.position.copy(this.light.position);
+		group.add(this.planets.sun);
+
 
         // Composer
         this.composer = new EffectComposer(this.renderer, { depthTexture: true })
@@ -253,6 +294,27 @@ export default class Application
         this.composer.addPass(this.passes.smaa)
         this.passes.list.push(this.passes.smaa)
 
+        /*this.passes.bloom = new EffectPass(this.camera, new BloomEffect())
+        this.passes.bloom.enabled = true
+        this.composer.addPass(this.passes.bloom)
+        this.passes.list.push(this.passes.bloom)*/
+
+
+		const godRaysEffect = new GodRaysEffect(this.camera, this.planets.sun, {
+			height: 480,
+			kernelSize: KernelSize.SMALL,
+			density: 0.96,
+			decay: 0.92,
+			weight: 0.3,
+			exposure: 0.54,
+			samples: 60,
+			clampMax: 1.0
+		});
+        this.passes.godray = new EffectPass(this.camera, godRaysEffect)
+        this.passes.godray.enabled = true
+        this.composer.addPass(this.passes.godray)
+        this.passes.list.push(this.passes.godray)
+
         this.passes.updateRenderToScreen()
 
         // Time tick
@@ -264,27 +326,28 @@ export default class Application
                 this.composer.render(this.scene, this.camera)
 
                 //Self-rotation
-                this.planets.sun.rotateY(0.004);
-                this.planets.mercury.mesh.rotateY(0.004);
-                this.planets.venus.mesh.rotateY(0.002);
-                this.planets.earth.mesh.rotateY(0.02);
-                this.planets.mars.mesh.rotateY(0.018);
-                this.planets.jupiter.mesh.rotateY(0.04);
-                this.planets.saturn.mesh.rotateY(0.038);
-                this.planets.uranus.mesh.rotateY(0.03);
-                this.planets.neptune.mesh.rotateY(0.032);
-                this.planets.pluto.mesh.rotateY(0.008);
+                let scale = 0.01
+                this.planets.sun.rotateY(0.004 * scale);
+                this.planets.mercury.mesh.rotateY(0.004 * scale);
+                this.planets.venus.mesh.rotateY(0.002 * scale);
+                this.planets.earth.mesh.rotateY(0.02 * scale);
+                this.planets.mars.mesh.rotateY(0.018 * scale);
+                this.planets.jupiter.mesh.rotateY(0.04 * scale);
+                this.planets.saturn.mesh.rotateY(0.038 * scale);
+                this.planets.uranus.mesh.rotateY(0.03 * scale);
+                this.planets.neptune.mesh.rotateY(0.032 * scale);
+                this.planets.pluto.mesh.rotateY(0.008 * scale);
 
                 //Around-sun-rotation
-                this.planets.mercury.obj.rotateY(0.04);
-                this.planets.venus.obj.rotateY(0.015);
-                this.planets.earth.obj.rotateY(0.01);
-                this.planets.mars.obj.rotateY(0.008);
-                this.planets.jupiter.obj.rotateY(0.002);
-                this.planets.saturn.obj.rotateY(0.0009);
-                this.planets.uranus.obj.rotateY(0.0004);
-                this.planets.neptune.obj.rotateY(0.0001);
-                this.planets.pluto.obj.rotateY(0.00007);
+                this.planets.mercury.obj.rotateY(0.04 * scale);
+                this.planets.venus.obj.rotateY(0.015 * scale);
+                this.planets.earth.obj.rotateY(0.01 * scale);
+                this.planets.mars.obj.rotateY(0.008 * scale);
+                this.planets.jupiter.obj.rotateY(0.002 * scale);
+                this.planets.saturn.obj.rotateY(0.0009 * scale);
+                this.planets.uranus.obj.rotateY(0.0004 * scale);
+                this.planets.neptune.obj.rotateY(0.0001 * scale);
+                this.planets.pluto.obj.rotateY(0.00007 * scale);
             }
             else
             {
