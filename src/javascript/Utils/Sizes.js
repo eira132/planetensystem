@@ -1,6 +1,6 @@
-import EventEmitter from './EventEmitter.js'
+import eventEmitter from './eventEmitter.js'
 
-export default class Sizes extends EventEmitter
+export default class sizes extends eventEmitter
 {
     /**
      * Constructor

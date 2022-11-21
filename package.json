@@ -22,7 +22,9 @@
   "homepage": "https://github.com/baldur132/planetensystem#readme",
   "dependencies": {
     "dat.gui": "^0.7.9",
+    "orbital-elements": "^0.1.3",
     "postprocessing": "^6.29.1",
+    "spatial-controls": "^5.0.8",
     "three": "^0.146.0"
   },
   "devDependencies": {

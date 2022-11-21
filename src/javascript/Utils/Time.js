@@ -1,6 +1,6 @@
-import EventEmitter from './EventEmitter.js'
+import eventEmitter from './eventEmitter.js'
 
-export default class Time extends EventEmitter
+export default class time extends eventEmitter
 {
     /**
      * Constructor
