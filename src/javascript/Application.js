@@ -9,6 +9,15 @@ import Time from './Utils/Time.js'
 import Planets from './Utils/Planets.js';
 import { LoadingManager } from 'three';
 
+
+/**
+ * Normalized device coordinates.
+ *
+ * @type {Vector2}
+ * @private
+ */
+const ndc = new THREE.Vector2();
+
 export default class Application
 {
     /**
@@ -27,6 +36,36 @@ export default class Application
 
         this.date = new Date()
         this.updateInterval = 'realtime'
+
+
+		/**
+		 * A raycaster.
+		 *
+		 * @type {Raycaster}
+		 * @private
+		 */
+		this.raycaster = null;
+
+		/**
+		 * A selected object.
+		 *
+		 * @type {Object3D}
+		 * @private
+		 */
+		this.selectedObject = null;
+
+		/**
+		 * An effect.
+		 *
+		 * @type {Effect}
+		 * @private
+		 */
+		this.effect = null;
+
+        /**
+         * A list of selected objects
+         */
+        this.selection = []
 
         // Bind controls
         this.bindEventListeners()
@@ -144,7 +183,8 @@ export default class Application
 			fog: false
 		});
 
-		const sunGeometry = new THREE.SphereGeometry(16, 32, 32);
+        // actual relative value is 108.9683
+		const sunGeometry = new THREE.SphereGeometry(10, 32, 32);
 		const sun = new THREE.Mesh(sunGeometry, sunMaterial);
 		sun.frustumCulled = false;
 		sun.matrixAutoUpdate = false;
@@ -162,14 +202,81 @@ export default class Application
         document.getElementById('yps').addEventListener('click', this.handleSpeedChange.bind(this))
         document.getElementById('Dps').addEventListener('click', this.handleSpeedChange.bind(this))
     }
+    /**
+     * Handler function for Mouseclicks on UI
+     * @param {PointerEvent} e 
+     */
     handleSpeedChange(e) {
         this.updateInterval = e.target.id
-        document.querySelectorAll('.active').forEach(elem => {
-            elem.classList.remove('active')
-        })
-        e.target.classList.add('active')
-        console.log(`changed updateInterval to '${this.updateInterval}'`)
+        if (!e.target.classList.contains('active')) {
+            document.querySelectorAll('.active').forEach(elem => {
+                elem.classList.remove('active')
+            })
+            e.target.classList.add('active')
+        } else {
+            if (e.target.id === 'realtime') {
+                if (e.target.classList.contains('active')) {
+                    //todo: implement pause button
+                }
+            }
+        }
     }
+
+	handleSelection() {
+		const selection = this.effect.selection;
+		const selectedObject = this.selectedObject;
+
+		/*if(selectedObject !== null) {
+			if(selection.has(selectedObject)) {
+				selection.delete(selectedObject);
+			} else {
+				selection.add(selectedObject);
+			}
+		}*/
+        if(selectedObject !== null) {
+            if (selection.has(selectedObject)) {
+                selection.clear()
+            } else {
+                selection.clear()
+                selection.add(selectedObject)
+                console.log(this.selectedObject)
+            }
+        }
+	}
+
+	handleEvent(event) {
+		switch(event.type) {
+			case "pointerdown":
+				this.raycast(event);
+				this.handleSelection();
+				break;
+		}
+	}
+
+	/**
+	 * Raycasts the scene.
+	 *
+	 * @param {PointerEvent} event - An event.
+	 */
+	raycast(event) {
+		const raycaster = this.raycaster;
+
+		ndc.x = (event.clientX / window.innerWidth) * 2.0 - 1.0;
+		ndc.y = -(event.clientY / window.innerHeight) * 2.0 + 1.0;
+
+		raycaster.setFromCamera(ndc, this.camera);
+		const intersects = raycaster.intersectObjects(this.scene.children, true);
+
+		this.selectedObject = null;
+
+		if(intersects.length > 0) {
+			const object = intersects[0].object;
+
+			if(object !== undefined) {
+				this.selectedObject = object;
+			}
+		}
+	}
 
     /**
      * Set environments
@@ -198,7 +305,7 @@ export default class Application
         this.controls.update()
 
         // Planets
-        this.planets.createSSB(this.scene)
+        //this.planets.createSSB(this.scene)
         this.orbits = this.planets.createStandardPlanets(this.scene, this.resources)
         // Sun
         this.planets.sun = this.createSun()
@@ -217,9 +324,6 @@ export default class Application
         ]);*/
         console.log(this.resources)
 
-        // Planet Selection
-        this.selection = []
-
         // Lighting
 		const ambientLight = new THREE.AmbientLight(0x101010);
 		//const ambientLight = new THREE.AmbientLight(0xffffff)
@@ -227,7 +331,7 @@ export default class Application
 		const mainLight = new THREE.PointLight(0xffe3b1)
 		mainLight.position.set(0, 0, 0)
 		mainLight.castShadow = true
-        mainLight.power = 30
+        mainLight.power = 10
 		mainLight.shadow.bias = 0.0000125
 		mainLight.shadow.mapSize.width = 2048
 		mainLight.shadow.mapSize.height = 2048
@@ -264,10 +368,8 @@ export default class Application
                 let options = {timezone: "UTC", year: "numeric", month: "long", day: "numeric"}
                 let localdate = this.date.toLocaleDateString([], options)
                 let localtime = this.date.toLocaleTimeString([], {timezone: "UTC", })
-                let html =  `<div id="datestring"><h1>${localdate}</h1></div> <div id="timestring"><h2>${localtime}</h2></div>`
-                document.getElementById('dateDisplay').innerHTML = html
-                
-                this.planets.updateStandardPlanets(this.date)
+                document.getElementById('datestring').innerText = localdate
+                document.getElementById('timestring').innerText = localtime
 
                 // simulation speed
                 let percent = this.time.delta/1000 // percentage to the next whole division
@@ -300,6 +402,9 @@ export default class Application
                         break;
                 }
                 this.date.setTime(current + division * percent)
+
+                this.planets.updateStandardPlanets(this.date, division * percent)
+                
                 //this.time.stop()
             }
             else
@@ -336,6 +441,10 @@ export default class Application
     initShaders() {
         // Composer
         this.composer = new EffectComposer(this.renderer, { depthTexture: true })
+
+		// Raycaster
+		this.raycaster = new THREE.Raycaster();
+		this.renderer.domElement.addEventListener("pointerdown", this);
 
         // Passes
         this.passes = {}
@@ -397,6 +506,7 @@ export default class Application
 			xRay: true
 		});
 		outlineEffect.selection.set(this.selection);
+		this.effect = outlineEffect;
         this.passes.outline = new EffectPass(this.camera, outlineEffect)
         this.passes.outline.enabled = true
         this.composer.addPass(this.passes.outline)
