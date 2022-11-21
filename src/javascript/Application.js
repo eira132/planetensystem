@@ -168,6 +168,7 @@ export default class Application
             elem.classList.remove('active')
         })
         e.target.classList.add('active')
+        console.log(`changed updateInterval to '${this.updateInterval}'`)
     }
 
     /**
@@ -260,9 +261,9 @@ export default class Application
             {
                 this.composer.render(this.scene, this.camera)
 
-                let options = {timezone: "UTC", weekday: "long", year: "numeric", month: "long", day: "numeric"}
+                let options = {timezone: "UTC", year: "numeric", month: "long", day: "numeric"}
                 let localdate = this.date.toLocaleDateString([], options)
-                let localtime = this.date.toLocaleTimeString([], {timezone: "UTC"})
+                let localtime = this.date.toLocaleTimeString([], {timezone: "UTC", })
                 let html =  `<div id="datestring"><h1>${localdate}</h1></div> <div id="timestring"><h2>${localtime}</h2></div>`
                 document.getElementById('dateDisplay').innerHTML = html
                 
@@ -275,10 +276,13 @@ export default class Application
                 switch(this.updateInterval) {
                     case "cps":
                         division = 3155760000000 // 1 century in ms 
+                        break;
                     case "Dps":
                         division = 315576000000 // 10 years in ms
+                        break;
                     case "yps":
                         division = 31557600000 // 1 year in ms
+                        break;
                     case "mps":
                         division = 2629800000 // 1 month in ms
                         break;
@@ -290,6 +294,7 @@ export default class Application
                         break;
                     case "hps":
                         division = 3600 * 1000 // 1 hour in ms 
+                        break;
                     case "realtime":
                         division = 1000 // real time, 1s in ms
                         break;
