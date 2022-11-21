@@ -12,9 +12,26 @@ export default class Planets extends OrbitingObject {
 
         this.orbits = {}
         this.resources = {}
+
+        this.orbitScale = 100
+        this.planetScale = 5
+
+        /**
+         * Object of the length of planet days relative to one Earth day
+         */
+        this.dayLength = {
+            mercury: 58.646,
+            venus: -243.018,
+            earth: 1,
+            mars: 1.026,
+            jupiter: 0.4135,
+            saturn: 0.444,
+            urnaus: -0.718,
+            neptune: 0.671
+        }
     }
 
-    createPlanet(size, texture, ring) {
+    createPlanet(size, tilt, texture, ring) {
         const geo = new THREE.SphereGeometry(size, 30, 30);
         const mat = new THREE.MeshPhongMaterial({
             map: texture
@@ -22,14 +39,14 @@ export default class Planets extends OrbitingObject {
         const mesh = new THREE.Mesh(geo, mat);
         const obj = new THREE.Object3D();
         obj.add(mesh);
-        mesh.rotation.x = -Math.PI/2 
-        mesh.rotation.y = -Math.PI/2 
+        mesh.rotation.x = -Math.PI/2
+        mesh.rotation.y = -Math.PI/2
 
         if(ring) {
             const ringGeo = new THREE.RingGeometry(
                 ring.innerRadius,
                 ring.outerRadius,
-                32);
+                128);
             const ringMat = new THREE.MeshBasicMaterial({
                 map: ring.texture,
                 side: THREE.DoubleSide
@@ -40,54 +57,77 @@ export default class Planets extends OrbitingObject {
             ringMesh.rotation.x = 0;
         }
         //mesh.position.x = position
+        obj.rotation.x = THREE.MathUtils.degToRad(tilt)
         return {obj, mesh}
     }
-    createOrbit(scene, planet, size, texture, ring = false) {
-        this[planet] = this.createPlanet(size, texture, ring)
+    createOrbit(scene, planet, size, tilt, texture, ring = false) {
+        this[planet] = this.createPlanet(size, tilt, texture, ring)
         let elements = orbit.computeOrbitalElementsByTime(orbit[planet], this.time)
-        elements.orbitalElements.a = elements.orbitalElements.a * this.scale
+        elements.orbitalElements.a = elements.orbitalElements.a * this.orbitScale
         this.orbits[planet] = this.createOrbitCircle({x: 0, y: 0}, elements.orbitalElements, this[planet].obj)
         scene.add(this.orbits[planet].threeObject)
     }
 
     createStandardPlanets(scene, resources) {
-        this.scale = 100
-        this.planetScale = 1
         this.resources = resources
 
-        this.createOrbit(scene, 'mercury', 3.2*this.planetScale, this.resources.textures.mercuryTexture)
-        this.createOrbit(scene, 'venus', 5.8*this.planetScale, this.resources.textures.venusTexture)
-        this.createOrbit(scene, 'earth', 6*this.planetScale, this.resources.textures.earthTexture)
-        this.createOrbit(scene, 'mars', 4*this.planetScale, this.resources.textures.marsTexture)
-        this.createOrbit(scene, 'jupiter', 12*this.planetScale, this.resources.textures.jupiterTexture)
-        this.createOrbit(scene, 'saturn', 10*this.planetScale, this.resources.textures.saturnTexture, {
-            innerRadius: 10,
-            outerRadius: 20,
+        this.createOrbit(scene, 'mercury', 0.3825 * this.planetScale, 0, this.resources.textures.mercuryTexture)
+        this.createOrbit(scene, 'venus', 0.9488 * this.planetScale, 177.3, this.resources.textures.venusTexture)
+        this.createOrbit(scene, 'earth', 1 * this.planetScale, 23.4, this.resources.textures.earthTexture)
+        this.createOrbit(scene, 'mars', 0.5325 * this.planetScale, 25.2, this.resources.textures.marsTexture)
+        this.createOrbit(scene, 'jupiter', 11.2092 * this.planetScale, 3.1, this.resources.textures.jupiterTexture)
+        this.createOrbit(scene, 'saturn', 9.4494 * this.planetScale, 26.7, this.resources.textures.saturnTexture, {
+            innerRadius: 10 * this.planetScale,
+            outerRadius: 20 * this.planetScale,
             texture: this.resources.textures.saturnRingTexture
         })
-        this.createOrbit(scene, 'uranus', 3.2*this.planetScale, this.resources.textures.urnausTexture, {
-            innerRadius: 7,
-            outerRadius: 12,
+        this.createOrbit(scene, 'uranus', 4.0074 * this.planetScale, 97.8, this.resources.textures.urnausTexture, {
+            innerRadius: 7 * this.planetScale,
+            outerRadius: 12 * this.planetScale,
             texture: this.resources.textures.uranusRingTexture
         })
-        this.createOrbit(scene, 'neptune', 3.2*this.planetScale, this.resources.textures.neptuneTexture)
+        this.createOrbit(scene, 'neptune', 3.8827 * this.planetScale, 28.3, this.resources.textures.neptuneTexture)
         return this.orbits
     }
 
     updatePlanetAnomaly(date, planet) {
         let v = orbit.computeTrueAnomalyByTime(orbit[planet], date)
-        this.orbits[planet].updateTrueAnomaly(THREE.MathUtils.degToRad(v))
+        this.orbits[planet].updateTrueAnomaly(-1 * THREE.MathUtils.degToRad(v))
+    }
+    /**
+     * 
+     * @param {String} planet a string denoting the planet
+     * @param {Int} elapsedMs the amount of ms that have elapsed in the simulation
+     */
+    updatePlanetRotation(planet, elapsedMs) {
+        const days = elapsedMs / 86400000; //convert elapsed ms to days 
+        let rotations = days / this.dayLength[planet]
+        this[planet].mesh.rotation.y += rotations * 5.5
     }
 
-    updateStandardPlanets(date) {
+    updateStandardPlanets(date, elapsed) {
         this.updatePlanetAnomaly(date, 'mercury')
+        this.updatePlanetRotation('mercury', elapsed)
+        
         this.updatePlanetAnomaly(date, 'venus')
-        this.updatePlanetAnomaly(date, 'earth')
-        this.updatePlanetAnomaly(date, 'mars')
-        this.updatePlanetAnomaly(date, 'jupiter')
-        this.updatePlanetAnomaly(date, 'saturn')
-        this.updatePlanetAnomaly(date, 'uranus')
-        this.updatePlanetAnomaly(date, 'neptune')
-    }
+        this.updatePlanetRotation('venus', elapsed)
 
+        this.updatePlanetAnomaly(date, 'earth')
+        this.updatePlanetRotation('earth', elapsed)
+
+        this.updatePlanetAnomaly(date, 'mars')
+        this.updatePlanetRotation('mars', elapsed)
+
+        this.updatePlanetAnomaly(date, 'jupiter')
+        this.updatePlanetRotation('jupiter', elapsed)
+        
+        this.updatePlanetAnomaly(date, 'saturn')
+        this.updatePlanetRotation('saturn', elapsed)
+
+        this.updatePlanetAnomaly(date, 'uranus')
+        this.updatePlanetRotation('uranus', elapsed)
+
+        this.updatePlanetAnomaly(date, 'neptune')
+        this.updatePlanetRotation('neptune', elapsed)
+    }
 }
