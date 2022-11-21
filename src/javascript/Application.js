@@ -75,6 +75,10 @@ export default class Application
             {
                 id: "plutoTexture",
                 url: "textures/pluto.jpg"
+            },
+            {
+                id: "starsTexture",
+                url: "textures/stars.jpg"
             }
         ]
         this.loadTextures(textureList).then((value) => {
@@ -173,6 +177,16 @@ export default class Application
         // Sun
         this.planets.sun = this.createSun()
 
+        // Background
+        const cubeTextureLoader = new THREE.CubeTextureLoader();
+        this.scene.background = cubeTextureLoader.load([
+            this.resources.textures.starsTexture,
+            this.resources.textures.starsTexture,
+            this.resources.textures.starsTexture,
+            this.resources.textures.starsTexture,
+            this.resources.textures.starsTexture,
+            this.resources.textures.starsTexture
+        ]);
 
         // Planet Selection
         this.selection = []
@@ -220,7 +234,9 @@ export default class Application
             {
                 this.composer.render(this.scene, this.camera)
 
-                this.planets.updatePlanetAnomaly(this.date, 'mercury')
+                document.getElementById('dateDisplay').innerText = this.date.toISOString()
+
+                /*this.planets.updatePlanetAnomaly(this.date, 'mercury')
                 this.planets.updatePlanetAnomaly(this.date, 'venus')
                 this.planets.updatePlanetAnomaly(this.date, 'earth')
                 this.planets.updatePlanetAnomaly(this.date, 'mars')
@@ -244,8 +260,8 @@ export default class Application
                         division = 86400000 // 1 day in ms
                         break;
                 }
-                this.date.setTime(current + division * percent)
-                //this.time.stop()
+                this.date.setTime(current + division * percent)*/
+                this.time.stop()
             }
             else
             {
