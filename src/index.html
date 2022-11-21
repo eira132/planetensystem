@@ -14,6 +14,9 @@
         <h1>Planetensystem</h1>
         <div class="lds-facebook"><div></div><div></div><div></div></div>
     </div>
+    <div class="title">
+        <h1 id="planetTitle"></h1>
+    </div>
     <div class="time-tray">
         <div id="dateDisplay" class="date">
             <div class="datestring">
@@ -106,12 +109,12 @@
         <h1>Optionen</h1>
         <label for="planetSize">
             Planetenskalierung
-            <input type="number" name="planetSize" id="planetSize" value="3" min="1" max="9">
+            <input type="number" name="planetSize" id="planetSize" value="5" min="1" max="9" autocomplete="off">
         </label>
-        <label for="orbitSize">
+        <!--<label for="orbitSize">
             Umlaufbahnskalierung
             <input type="number" name="orbitSize" id="orbitSize" value="100" step="10" min="10" max="1000">
-        </label>
+        </label>-->
     </div>
 </body>
 </html>

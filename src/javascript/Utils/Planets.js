@@ -7,14 +7,14 @@ export default class planets extends orbitingObject {
     /**
      * Constructor
      */
-    constructor(time = new Date()) {
+    constructor(orbitScale = 100, planetScale = 5) {
         super()
 
         this.orbits = {}
         this.resources = {}
 
-        this.orbitScale = 100
-        this.planetScale = 5
+        this.orbitScale = orbitScale
+        this.planetScale = planetScale
 
         /**
          * Object of the length of planet days relative to one Earth day
@@ -62,6 +62,7 @@ export default class planets extends orbitingObject {
     }
     createOrbit(scene, planet, size, tilt, texture, ring = false) {
         this[planet] = this.createPlanet(size, tilt, texture, ring)
+        this[planet].mesh.name = planet
         let elements = orbit.computeOrbitalElementsByTime(orbit[planet], this.time)
         elements.orbitalElements.a = elements.orbitalElements.a * this.orbitScale
         this.orbits[planet] = this.createOrbitCircle({x: 0, y: 0}, elements.orbitalElements, this[planet].obj)

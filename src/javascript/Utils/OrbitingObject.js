@@ -6,8 +6,8 @@ export default class orbitingObject {
     /**
      * Constructor
      */
-    constructor(time = new Date()) {
-        this.time = time
+    constructor() {
+        this.time = new Date()
     }
 
     updateTime(time) {

@@ -81,6 +81,15 @@ label {
     font-size: 5rem;
 }
 
+.title {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+
+    padding: 0.8rem;
+}
+
 .time-tray {
     position: absolute;
     top: 0;

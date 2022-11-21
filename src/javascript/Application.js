@@ -7,7 +7,7 @@ import sizes from './Utils/sizes.js'
 import time from './Utils/time.js'
 import planets from './Utils/planets.js';
 
-//import planetInfo from './planetInfo.json'
+import planetInfo from './planetInfo.json'
 
 /**
  * Normalized device coordinates.
@@ -200,6 +200,21 @@ export default class Application
         document.getElementById('mps').addEventListener('click', this.handleSpeedChange.bind(this))
         document.getElementById('yps').addEventListener('click', this.handleSpeedChange.bind(this))
         document.getElementById('Dps').addEventListener('click', this.handleSpeedChange.bind(this))
+        document.getElementById('planetSize').addEventListener('change', this.handlePlanetSizeChange.bind(this))
+    }
+    /**
+     * Handler function for planet size update
+     * @param {Event} e
+     */
+    handlePlanetSizeChange(e) {
+        if (parseInt(e.target.value) != NaN) {
+            this.controls.dispose()
+            this.renderer.dispose()
+            this.composer.dispose()
+
+            this.planets = new planets(100, e.target.value)
+            this.setEnvironment()
+        }
     }
     /**
      * Handler function for Mouseclicks on UI
@@ -224,6 +239,7 @@ export default class Application
 	handleSelection() {
 		const selection = this.effect.selection;
 		const selectedObject = this.selectedObject;
+        const titleElement = document.getElementById('planetTitle')
 
 		/*if(selectedObject !== null) {
 			if(selection.has(selectedObject)) {
@@ -235,10 +251,11 @@ export default class Application
         if(selectedObject !== null) {
             if (selection.has(selectedObject)) {
                 selection.clear()
+                titleElement.innerText = ""
             } else {
                 selection.clear()
                 selection.add(selectedObject)
-                console.log(this.selectedObject)
+                titleElement.innerText = selectedObject.name.toUpperCase()
             }
         }
 	}
@@ -321,7 +338,6 @@ export default class Application
             starsTexture,
             starsTexture
         ]);*/
-        console.log(this.resources)
 
         // Lighting
 		const ambientLight = new THREE.AmbientLight(0x101010);
