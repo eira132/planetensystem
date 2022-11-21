@@ -99,9 +99,11 @@ export default class Application
                 let imgURL = new URL(list[i].url, base)
                 // load the texture using three's loader
                 let loader = new THREE.TextureLoader()
+                console.log(`loading ${list[i]} at ${imgURL}`)
                 loader.load(imgURL, (texture) => {
                         count++
                         textures[list[i].id] = texture
+                        console.log(`loaded ${imgURL}`)
                         if (count === target) {
                             resolve(textures)
                         }
@@ -177,25 +179,22 @@ export default class Application
 
         // Lighting
 		//const ambientLight = new THREE.AmbientLight(0x101010);
-		const ambientLight = new THREE.AmbientLight(0xffffff);
+		const ambientLight = new THREE.AmbientLight(0xffffff)
 
-		const mainLight = new THREE.PointLight(0xffe3b1);
-		mainLight.position.set(0, 0, 0);
-		mainLight.castShadow = true;
-		mainLight.shadow.bias = 0.0000125;
-		mainLight.shadow.mapSize.width = 2048;
-		mainLight.shadow.mapSize.height = 2048;
+		const mainLight = new THREE.PointLight(0xffe3b1)
+		mainLight.position.set(0, 0, 0)
+		mainLight.castShadow = true
+        mainLight.power = 30
+		mainLight.shadow.bias = 0.0000125
+		mainLight.shadow.mapSize.width = 2048
+		mainLight.shadow.mapSize.height = 2048
 
 		if (window.innerWidth < 720) {
-
-			mainLight.shadow.mapSize.width = 512;
-			mainLight.shadow.mapSize.height = 512;
-
+			mainLight.shadow.mapSize.width = 512
+			mainLight.shadow.mapSize.height = 512
 		} else if (window.innerWidth < 1280) {
-
-			mainLight.shadow.mapSize.width = 1024;
-			mainLight.shadow.mapSize.height = 1024;
-
+			mainLight.shadow.mapSize.width = 1024
+			mainLight.shadow.mapSize.height = 1024
 		}
 
 		this.light = mainLight;
@@ -210,6 +209,8 @@ export default class Application
         // Postprocessing effect
         this.initShaders()
 
+        this.date = new Date()
+        this.updateInterval = 'hps'
 
         // Time tick
         this.time.on('tick', () =>
@@ -219,7 +220,32 @@ export default class Application
             {
                 this.composer.render(this.scene, this.camera)
 
+                this.planets.updatePlanetAnomaly(this.date, 'mercury')
+                this.planets.updatePlanetAnomaly(this.date, 'venus')
+                this.planets.updatePlanetAnomaly(this.date, 'earth')
+                this.planets.updatePlanetAnomaly(this.date, 'mars')
+                this.planets.updatePlanetAnomaly(this.date, 'jupiter')
+                this.planets.updatePlanetAnomaly(this.date, 'saturn')
+                this.planets.updatePlanetAnomaly(this.date, 'uranus')
+                this.planets.updatePlanetAnomaly(this.date, 'neptune')
 
+                // simulation speed
+                let percent = this.time.delta/1000 // percentage to the next whole division
+                let current = this.date.getTime()
+                let division = 3600 * 1000 // 1 hour in ms 
+                switch(this.updateInterval) {
+                    case "mps":
+                        division = 2629800000 // 1 month in ms
+                        break;
+                    case "wps":
+                        division = 604800000 // 1 week in ms
+                        break;
+                    case "dps":
+                        division = 86400000 // 1 day in ms
+                        break;
+                }
+                this.date.setTime(current + division * percent)
+                //this.time.stop()
             }
             else
             {
@@ -300,7 +326,7 @@ export default class Application
 			clampMax: 1.0
 		});
         this.passes.godray = new EffectPass(this.camera, godRaysEffect)
-        this.passes.godray.enabled = true
+        this.passes.godray.enabled = false
         this.composer.addPass(this.passes.godray)
         this.passes.list.push(this.passes.godray)
 

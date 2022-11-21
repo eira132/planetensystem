@@ -230,6 +230,34 @@
 	}
 	exports.computeOrbitalElementsByTime = computeOrbitalElementsByTime;
 
+	var computeTrueAnomalyByTime = function(body, date) {
+		var d = toDateNumber(date);
+		let ut = date.getHours() + date.getMinutes()/60 + date.getSeconds()/3600
+		d = d + ut/24.0
+
+		var orbitalElements = body.getOrbitalElements(d);
+		var a = orbitalElements.a;   // (Mean distance)
+		var e = orbitalElements.e;   // (Eccentricity)
+		var M = orbitalElements.M;   // (Mean anomaly)
+
+		// Compute the eccentric anomaly E from the mean anomaly M and from the eccentricity e (E and M in degrees):
+		var E = M + (180/Math.PI) * e * Math.sin(toRadians(M)) * (1.0 + e * Math.cos(toRadians(M)));
+		var error = 1;
+		while (error > 0.005) {
+			var E1 = E - (E - (180/Math.PI) * e * Math.sin(toRadians(E)) - M) / (1 - e * Math.cos(toRadians(E)));
+			error = Math.abs(E - E1);
+			E = E1;
+		}
+		
+		// Then compute the Body's distance r and its true anomaly v from:
+		var x = a * (Math.cos(toRadians(E)) - e);
+		var y = a * (Math.sqrt(1.0 - e*e) * Math.sin(toRadians(E)));
+
+		// Then we convert this to distance and true anonaly:
+		return toDegrees(Math.atan2(y, x));
+	}
+	exports.computeTrueAnomalyByTime = computeTrueAnomalyByTime
+
 	//************************************************************************
 	// Returns the ecliptic positions between two dates and a specific
 	// resolution.
