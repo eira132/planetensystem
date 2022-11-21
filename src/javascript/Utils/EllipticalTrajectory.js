@@ -142,7 +142,7 @@ export default class EllipticalTrajectory {
         var curve = new Ellipse(this.semimajorAxis, this.semiminorAxis);
 
         // params
-        var pathSegments = 64;
+        var pathSegments = 256;
         var tubeRadius = 0.1;
         var radiusSegments = 32;
         var geometry = new THREE.TubeGeometry(curve, pathSegments, tubeRadius, radiusSegments, true);
