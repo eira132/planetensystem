@@ -144,15 +144,12 @@ export default class Application
             let target = list.length
             for (let i = 0; i < list.length; i++) {
                 // create url dependency
-                const base = 'http://localhost:1234'
-                let imgURL = new URL(list[i].url, base)
+                let imgURL = new URL(list[i].url, import.meta.url)
                 // load the texture using three's loader
                 let loader = new THREE.TextureLoader()
-                console.log(`loading ${list[i]} at ${imgURL}`)
                 loader.load(imgURL, (texture) => {
                         count++
                         textures[list[i].id] = texture
-                        console.log(`loaded ${imgURL}`)
                         if (count === target) {
                             resolve(textures)
                         }
