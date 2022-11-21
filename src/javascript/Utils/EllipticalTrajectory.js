@@ -143,14 +143,13 @@ export default class EllipticalTrajectory {
 
         // params
         var pathSegments = 64;
-        var tubeRadius = 0.25;
-        var radiusSegments = 16;
-        var geometry = new THREE.TubeBufferGeometry(curve, pathSegments, tubeRadius, radiusSegments, true);
-        var material = new THREE.MeshBasicMaterial({ color : 0xff0000 });
+        var tubeRadius = 0.1;
+        var radiusSegments = 32;
+        var geometry = new THREE.TubeGeometry(curve, pathSegments, tubeRadius, radiusSegments, true);
+        var material = new THREE.MeshBasicMaterial({ color : 0x888888 });
         var ellipseMesh = new THREE.Mesh( geometry, material );
 
         // center of ellipse at focus, appropriately shift
-
         var centerX = -1 * this.semimajorAxis * this.eccentricity;
         ellipseMesh.position.set(centerX, 0, 0);
         return ellipseMesh;
@@ -163,8 +162,8 @@ export default class EllipticalTrajectory {
         var pathSegments = 2;
         var tubeRadius = 0.15;
         var radiusSegments = 16;
-        var geometry = new THREE.TubeBufferGeometry(curve, pathSegments, tubeRadius, radiusSegments, false);
-        var material = new THREE.MeshBasicMaterial({ color : 0x00ff00 });
+        var geometry = new THREE.TubeGeometry(curve, pathSegments, tubeRadius, radiusSegments, false);
+        var material = new THREE.MeshBasicMaterial({ color : 0xaaaaaa });
         var dirVector = new THREE.Mesh( geometry, material );
         return dirVector;
     }

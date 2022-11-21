@@ -6,7 +6,7 @@ import * as dat from 'dat.gui'
 import Sizes from './Utils/Sizes.js'
 import Time from './Utils/Time.js'
 
-import EllipticalTrajectory from './Utils/EllipticalTrajectory.js';
+import Planets from './Utils/Planets.js';
 
 export default class Application
 {
@@ -22,6 +22,7 @@ export default class Application
         // Set up
         this.time = new Time()
         this.sizes = new Sizes()
+        this.planets = new Planets()
 
         // Load resources
         this.resources = {}
@@ -116,62 +117,6 @@ export default class Application
     /**
      * Planet Generation
      */
-    createPlanet(size, texture, position, ring) {
-        const geo = new THREE.SphereGeometry(size, 30, 30);
-        const mat = new THREE.MeshPhongMaterial({
-            map: texture
-        });
-        const mesh = new THREE.Mesh(geo, mat);
-        const obj = new THREE.Object3D();
-        obj.add(mesh);
-        if(ring) {
-            const ringGeo = new THREE.RingGeometry(
-                ring.innerRadius,
-                ring.outerRadius,
-                32);
-            const ringMat = new THREE.MeshBasicMaterial({
-                map: ring.texture,
-                side: THREE.DoubleSide
-            });
-            const ringMesh = new THREE.Mesh(ringGeo, ringMat);
-            obj.add(ringMesh);
-            ringMesh.position.x = position;
-            ringMesh.rotation.x = -0.5 * Math.PI;
-        }
-        this.scene.add(obj);
-        mesh.position.x = position;
-        return {mesh, obj}
-    }
-    generateStandardPlanets() {
-        const mercury = this.createPlanet(3.2, this.resources.textures.mercuryTexture, 28);
-        const venus = this.createPlanet(5.8, this.resources.textures.venusTexture, 44);
-        const earth = this.createPlanet(6, this.resources.textures.earthTexture, 62);
-        /*const mars = this.createPlanet(4, this.resources.textures.marsTexture, 78);
-        const jupiter = this.createPlanet(12, this.resources.textures.jupiterTexture, 100);
-        const saturn = this.createPlanet(10, this.resources.textures.saturnTexture, 138, {
-            innerRadius: 10,
-            outerRadius: 20,
-            texture: this.resources.textures.saturnRingTexture
-        });
-        const uranus = this.createPlanet(7, this.resources.textures.uranusTexture, 176, {
-            innerRadius: 7,
-            outerRadius: 12,
-            texture: this.resources.textures.uranusRingTexture
-        });
-        const neptune = this.createPlanet(7, this.resources.textures.neptuneTexture, 200);
-        const pluto = this.createPlanet(2.8, this.resources.textures.plutoTexture, 216);*/
-        return {
-            mercury: mercury,
-            venus: venus,
-            earth: earth,
-            //mars: mars,
-            //jupiter: jupiter,
-            //saturn: saturn,
-            //uranus: uranus,
-            //neptune: neptune,
-            //pluto: pluto
-        }
-    }
     createSun() {
         /*const sunGeo = new THREE.SphereGeometry(16, 30, 30);
         const sunMat = new THREE.MeshBasicMaterial({
@@ -193,47 +138,6 @@ export default class Application
 
         return sun
     }
-    generateOrbitLines() {
-        let scalingFactor = 100
-        this.orbits = {}
-        this.orbits.mercury = new EllipticalTrajectory(
-            0,
-            0,
-            0.387098 * scalingFactor,
-            0.205630,
-            THREE.MathUtils.degToRad(29.124),
-            THREE.MathUtils.degToRad(3.38),
-            THREE.MathUtils.degToRad(48.331),
-            0,
-            this.planets.mercury.mesh
-        )
-        this.scene.add(this.orbits.mercury.threeObject)
-        this.orbits.venus = new EllipticalTrajectory(
-            0,
-            0,
-            0.723332 * scalingFactor,
-            0.006772,
-            THREE.MathUtils.degToRad(54.884),
-            THREE.MathUtils.degToRad(3.86),
-            THREE.MathUtils.degToRad(76.680),
-            0,
-            this.planets.venus.mesh
-        )
-        this.scene.add(this.orbits.venus.threeObject)
-        this.orbits.earth = new EllipticalTrajectory(
-            0,
-            0,
-            1.0000010178 * scalingFactor,
-            0.0167086,
-            THREE.MathUtils.degToRad(228.1),
-            THREE.MathUtils.degToRad(7.155),
-            THREE.MathUtils.degToRad(174.9),
-            0,
-            this.planets.earth.mesh
-        )
-        this.scene.add(this.orbits.earth.threeObject)
-    }
-
 
     /**
      * Set environments
@@ -262,23 +166,21 @@ export default class Application
         this.controls.update()
 
         // Planets
-        this.planets = this.generateStandardPlanets()
-        this.generateOrbitLines()
+        this.planets.createSSB(this.scene)
+        this.orbits = this.planets.createStandardPlanets(this.scene, this.resources)
         // Sun
         this.planets.sun = this.createSun()
 
 
         // Planet Selection
-        const selection = [this.planets.earth.mesh]
+        this.selection = []
 
         // Lighting
-        /*const pointLight = new THREE.PointLight(0xFFFFFF, 2, 300)
-        this.scene.add(pointLight)*/
-
-		const ambientLight = new THREE.AmbientLight(0x101010);
+		//const ambientLight = new THREE.AmbientLight(0x101010);
+		const ambientLight = new THREE.AmbientLight(0xffffff);
 
 		const mainLight = new THREE.PointLight(0xffe3b1);
-		mainLight.position.set(-0.5, 3, -0.25);
+		mainLight.position.set(0, 0, 0);
 		mainLight.castShadow = true;
 		mainLight.shadow.bias = 0.0000125;
 		mainLight.shadow.mapSize.width = 2048;
@@ -305,6 +207,52 @@ export default class Application
 		group.add(this.planets.sun);
 
 
+        // Postprocessing effect
+        this.initShaders()
+
+
+        // Time tick
+        this.time.on('tick', () =>
+        {
+            // Renderer
+            if(this.useComposer)
+            {
+                this.composer.render(this.scene, this.camera)
+
+
+            }
+            else
+            {
+                this.renderer.render(this.scene, this.camera)
+            }
+        })
+
+        // Resize event
+        this.sizes.on('resize', () =>
+        {
+            this.camera.aspect = this.sizes.viewport.width / this.sizes.viewport.height
+            this.camera.updateProjectionMatrix()
+
+            this.renderer.setSize(this.sizes.viewport.width, this.sizes.viewport.height)
+
+            if(this.useComposer)
+            {
+                for(const _pass of this.passes.list)
+                {
+                    if(_pass.setSize)
+                    {
+                        _pass.setSize(this.sizes.viewport.width, this.sizes.viewport.height)
+                    }
+                }
+                this.composer.setSize(this.sizes.viewport.width, this.sizes.viewport.height)
+            }
+        })
+    }
+
+    /**
+     * Init shader passes
+     */
+    initShaders() {
         // Composer
         this.composer = new EffectComposer(this.renderer, { depthTexture: true })
 
@@ -342,8 +290,8 @@ export default class Application
 
         // sun godray effect
 		const godRaysEffect = new GodRaysEffect(this.camera, this.planets.sun, {
-			height: 1080,
-			kernelSize: KernelSize.MEDIUM,
+			height: 240,
+			kernelSize: KernelSize.LARGE,
 			density: 0.96,
 			decay: 0.92,
 			weight: 0.3,
@@ -352,7 +300,7 @@ export default class Application
 			clampMax: 1.0
 		});
         this.passes.godray = new EffectPass(this.camera, godRaysEffect)
-        this.passes.godray.enabled = false
+        this.passes.godray.enabled = true
         this.composer.addPass(this.passes.godray)
         this.passes.list.push(this.passes.godray)
 
@@ -367,7 +315,7 @@ export default class Application
 			blur: false,
 			xRay: true
 		});
-		outlineEffect.selection.set(selection);
+		outlineEffect.selection.set(this.selection);
         this.passes.outline = new EffectPass(this.camera, outlineEffect)
         this.passes.outline.enabled = true
         this.composer.addPass(this.passes.outline)
@@ -380,69 +328,6 @@ export default class Application
         this.passes.list.push(this.passes.smaa)
 
         this.passes.updateRenderToScreen()
-
-        // Time tick
-        this.time.on('tick', () =>
-        {
-            // Renderer
-            if(this.useComposer)
-            {
-                this.composer.render(this.scene, this.camera)
-
-                //Self-rotation
-                let scale = 0.1
-
-                /*this.planets.sun.rotateY(0.004 * scale);
-                this.planets.mercury.mesh.rotateY(0.004 * scale);
-                this.planets.venus.mesh.rotateY(0.002 * scale);
-                this.planets.earth.mesh.rotateY(0.02 * scale);
-                this.planets.mars.mesh.rotateY(0.018 * scale);
-                this.planets.jupiter.mesh.rotateY(0.04 * scale);
-                this.planets.saturn.mesh.rotateY(0.038 * scale);
-                this.planets.uranus.mesh.rotateY(0.03 * scale);
-                this.planets.neptune.mesh.rotateY(0.032 * scale);
-                this.planets.pluto.mesh.rotateY(0.008 * scale);
-
-                //Around-sun-rotation
-                this.planets.mercury.obj.rotateY(0.04 * scale);
-                this.planets.venus.obj.rotateY(0.015 * scale);
-                this.planets.earth.obj.rotateY(0.01 * scale);
-                this.planets.mars.obj.rotateY(0.008 * scale);
-                this.planets.jupiter.obj.rotateY(0.002 * scale);
-                this.planets.saturn.obj.rotateY(0.0009 * scale);
-                this.planets.uranus.obj.rotateY(0.0004 * scale);
-                this.planets.neptune.obj.rotateY(0.0001 * scale);
-                this.planets.pluto.obj.rotateY(0.00007 * scale);*/
-                this.orbits.mercury.decrementTrueAnomaly(0.04 * scale)
-                this.orbits.venus.decrementTrueAnomaly(0.015 * scale)
-                this.orbits.earth.decrementTrueAnomaly(0.01 * scale)
-            }
-            else
-            {
-                this.renderer.render(this.scene, this.camera)
-            }
-        })
-
-        // Resize event
-        this.sizes.on('resize', () =>
-        {
-            this.camera.aspect = this.sizes.viewport.width / this.sizes.viewport.height
-            this.camera.updateProjectionMatrix()
-
-            this.renderer.setSize(this.sizes.viewport.width, this.sizes.viewport.height)
-
-            if(this.useComposer)
-            {
-                for(const _pass of this.passes.list)
-                {
-                    if(_pass.setSize)
-                    {
-                        _pass.setSize(this.sizes.viewport.width, this.sizes.viewport.height)
-                    }
-                }
-                this.composer.setSize(this.sizes.viewport.width, this.sizes.viewport.height)
-            }
-        })
     }
 
 
