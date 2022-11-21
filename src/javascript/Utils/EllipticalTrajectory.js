@@ -2,7 +2,7 @@
 import * as THREE from 'three'
 
 export default class EllipticalTrajectory {
-    constructor(x, y, sourceRadius, satelliteRadius, semimajorAxis, eccentricity, argumentofPeriapsis, inclination, longitudeOfAscendingNode, trueAnomaly, showOrbitalPlane){
+    constructor(x, y, semimajorAxis, eccentricity, argumentofPeriapsis, inclination, longitudeOfAscendingNode){
         this.x = x;
         this.y = y;
         this.semimajorAxis = semimajorAxis;
@@ -10,28 +10,21 @@ export default class EllipticalTrajectory {
         this.argumentofPeriapsis = argumentofPeriapsis;
         this.inclination = inclination;
         this.longitudeOfAscendingNode = longitudeOfAscendingNode;
-        this.trueAnomaly = trueAnomaly;
-        this.showOrbitalPlane = showOrbitalPlane;
-        this.gravitySource = this.createGravitySource(sourceRadius);
-        this.satellite = this.createSatellite(satelliteRadius);
-        this.orbitalPlane = this.createOrbitalPlane();
         this.trajectory = this.initializeTrajectory();
         this.threeObject = new THREE.Group();
-        this.trajectory.add(this.gravitySource);
-        this.trajectory.add(this.satellite);
         this.threeObject.add(this.trajectory);
-        this.setOrbitalPlaneVisibility();
 
         // NOT part of group, not on the orbital plane
         this.ascendingNodeVector = this.initializeAscendingNodeVector();
 
         // Initialize arg of periapse
-        this.updateArgumentofPeriapsis(this.argumentofPeriapsis);
+        //this.updateArgumentofPeriapsis(this.argumentofPeriapsis);
 
         // Initialize inclination and arg of longitude
+        this.threeObject.rotateOnAxis(new THREE.Vector3(1, 0, 0), Math.PI/2)
         this.threeObject.rotateOnAxis(this.threeObject.up, this.inclination);
         this.threeObject.rotateOnAxis(new THREE.Vector3(0, 0, 1), this.longitudeOfAscendingNode - Math.PI/2);
-        this.ascendingNodeVector.rotateOnAxis(new THREE.Vector3(0, 0, 1), this.longitudeOfAscendingNode - Math.PI/2);
+        //this.ascendingNodeVector.rotateOnAxis(new THREE.Vector3(0, 0, 1), this.longitudeOfAscendingNode - Math.PI/2);
     }
 
     get semiminorAxis(){
@@ -42,10 +35,6 @@ export default class EllipticalTrajectory {
         return this.semimajorAxis * (1 - Math.pow(this.eccentricity, 2));
     }
 
-    get orbitalDistance(){
-        return this.semiLatusRectum / (1 + this.eccentricity * Math.cos(this.trueAnomaly));
-    }
-
     updateSemimajorAxis(semimajorAxis){
         this.semimajorAxis = semimajorAxis;
         this.threeObject.remove(this.trajectory);
@@ -54,11 +43,6 @@ export default class EllipticalTrajectory {
 
         this.updateArgumentofPeriapsis(this.argumentofPeriapsis);
         this.updateInclination(this.inclination);
-
-        this.setSourcePosition();
-        this.setSatellitePosition(this.trueAnomaly);
-        this.trajectory.add(this.gravitySource);
-        this.trajectory.add(this.satellite);
     }
 
     updateEccentricity(eccentricity){
@@ -69,11 +53,6 @@ export default class EllipticalTrajectory {
 
         this.updateArgumentofPeriapsis(this.argumentofPeriapsis);
         this.updateInclination(this.inclination);
-
-        this.setSourcePosition();
-        this.setSatellitePosition(this.trueAnomaly);
-        this.trajectory.add(this.gravitySource);
-        this.trajectory.add(this.satellite);
     }
 
     updateArgumentofPeriapsis(argumentofPeriapsis){
@@ -101,11 +80,6 @@ export default class EllipticalTrajectory {
         this.threeObject.rotateOnAxis(this.threeObject.up, this.inclination);
     }
 
-    updateTrueAnomaly(trueAnomaly){
-        this.trueAnomaly = trueAnomaly;
-        this.setSatellitePosition(this.trueAnomaly);
-    }
-
     // general utilities
     setTrajectoryAngleInOrbitalPlane(targetAngle){
         var axis = new THREE.Vector3(0,0,1);
@@ -120,62 +94,7 @@ export default class EllipticalTrajectory {
         this.ascendingNodeVector.setRotationFromAxisAngle(axis, ascNodeAngle);
     }
 
-    setSourcePosition(){
-        var centerX = this.semimajorAxis * this.eccentricity;
-        this.gravitySource.position.set(centerX, 0, 0);
-    }
-
-    setSatellitePosition(angle){
-        this.setOrbitalPositionInPlane(this.orbitalDistance, angle);
-    }
-
-    setOrbitalPositionInPlane(distance, trueAnomaly){
-        var axis = new THREE.Vector3(0,0,1);
-        var positionVector = new THREE.Vector3(distance, 0, 0);
-        positionVector.applyAxisAngle(axis, trueAnomaly);
-        this.satellite.position.set(this.semimajorAxis * this.eccentricity + positionVector.x, positionVector.y, 0);
-    }
-
-    setOrbitalPlaneVisibility(showOrbitalPlane){
-        this.showOrbitalPlane = showOrbitalPlane;
-        if (this.showOrbitalPlane){
-            this.threeObject.add(this.orbitalPlane);
-        }
-        else{
-            this.threeObject.remove(this.orbitalPlane);
-        }
-    }
-
     // INITIALIZATION
-    createGravitySource(){
-        var geometry = new THREE.SphereGeometry(3, 32, 16);
-        var material = new THREE.MeshBasicMaterial({color: 0xffff00, transparent: true, opacity: 0.75});
-        var sphere = new THREE.Mesh(geometry, material);
-        var centerX = this.semimajorAxis * this.eccentricity;
-        sphere.position.set(centerX, 0, 0);
-        return sphere;
-    }
-
-    createSatellite(){
-        var geometry = new THREE.SphereGeometry( 0.75, 32, 16 );
-        var material = new THREE.MeshBasicMaterial({color: 0x14d4ff, transparent: false, opacity: 1});
-        var sphere = new THREE.Mesh(geometry, material);
-
-        var centerX = this.semimajorAxis * this.eccentricity;
-        sphere.position.set(centerX + this.orbitalDistance, 0, 0);
-        // sphere.rotateOnAxis(new THREE.Vector3(0, 0, 1), this.trueAnomaly); // rotate the OBJECT
-        console.log(sphere);
-        return sphere;
-    }
-
-    createOrbitalPlane(){
-        var planeGeom = new THREE.PlaneGeometry(250, 250);
-        var alphaMap = new THREE.TextureLoader().load('../../assets/textures/plane_alpha.png' );
-        var planeCaptureMaterial = new THREE.MeshBasicMaterial({color: 0xa8ab7b, side: THREE.DoubleSide, alphaMap: alphaMap, transparent: true, opacity: 1})
-        var referencePlane = new THREE.Mesh(planeGeom, planeCaptureMaterial);
-        return referencePlane;
-    }
-
     initializeTrajectory(){
         var curve = new Ellipse(this.semimajorAxis, this.semiminorAxis);
 
