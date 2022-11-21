@@ -1,10 +1,12 @@
 import * as THREE from 'three'
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { EffectComposer, RenderPass, EffectPass, SMAAEffect, BloomEffect, GodRaysEffect, KernelSize } from 'postprocessing'
+import { EffectComposer, RenderPass, EffectPass, SMAAEffect, BloomEffect, GodRaysEffect, KernelSize, OutlineEffect, BlendFunction } from 'postprocessing'
 import * as dat from 'dat.gui'
 
 import Sizes from './Utils/Sizes.js'
 import Time from './Utils/Time.js'
+
+import EllipticalTrajectory from './Utils/EllipticalTrajectory.js';
 
 export default class Application
 {
@@ -87,7 +89,6 @@ export default class Application
      */
     loadTextures(list) {
         return new Promise((resolve, reject) => {
-            console.log('loading textures')
             let textures = {}
             let count = 0
             let target = list.length
@@ -117,7 +118,7 @@ export default class Application
      */
     createPlanet(size, texture, position, ring) {
         const geo = new THREE.SphereGeometry(size, 30, 30);
-        const mat = new THREE.MeshStandardMaterial({
+        const mat = new THREE.MeshPhongMaterial({
             map: texture
         });
         const mesh = new THREE.Mesh(geo, mat);
@@ -145,7 +146,7 @@ export default class Application
         const mercury = this.createPlanet(3.2, this.resources.textures.mercuryTexture, 28);
         const venus = this.createPlanet(5.8, this.resources.textures.venusTexture, 44);
         const earth = this.createPlanet(6, this.resources.textures.earthTexture, 62);
-        const mars = this.createPlanet(4, this.resources.textures.marsTexture, 78);
+        /*const mars = this.createPlanet(4, this.resources.textures.marsTexture, 78);
         const jupiter = this.createPlanet(12, this.resources.textures.jupiterTexture, 100);
         const saturn = this.createPlanet(10, this.resources.textures.saturnTexture, 138, {
             innerRadius: 10,
@@ -158,17 +159,17 @@ export default class Application
             texture: this.resources.textures.uranusRingTexture
         });
         const neptune = this.createPlanet(7, this.resources.textures.neptuneTexture, 200);
-        const pluto = this.createPlanet(2.8, this.resources.textures.plutoTexture, 216);
+        const pluto = this.createPlanet(2.8, this.resources.textures.plutoTexture, 216);*/
         return {
             mercury: mercury,
             venus: venus,
             earth: earth,
-            mars: mars,
-            jupiter: jupiter,
-            saturn: saturn,
-            uranus: uranus,
-            neptune: neptune,
-            pluto: pluto
+            //mars: mars,
+            //jupiter: jupiter,
+            //saturn: saturn,
+            //uranus: uranus,
+            //neptune: neptune,
+            //pluto: pluto
         }
     }
     createSun() {
@@ -185,12 +186,52 @@ export default class Application
 			fog: false
 		});
 
-		const sunGeometry = new THREE.SphereBufferGeometry(16, 32, 32);
+		const sunGeometry = new THREE.SphereGeometry(16, 32, 32);
 		const sun = new THREE.Mesh(sunGeometry, sunMaterial);
 		sun.frustumCulled = false;
 		sun.matrixAutoUpdate = false;
 
         return sun
+    }
+    generateOrbitLines() {
+        let scalingFactor = 100
+        this.orbits = {}
+        this.orbits.mercury = new EllipticalTrajectory(
+            0,
+            0,
+            0.387098 * scalingFactor,
+            0.205630,
+            THREE.MathUtils.degToRad(29.124),
+            THREE.MathUtils.degToRad(3.38),
+            THREE.MathUtils.degToRad(48.331),
+            0,
+            this.planets.mercury.mesh
+        )
+        this.scene.add(this.orbits.mercury.threeObject)
+        this.orbits.venus = new EllipticalTrajectory(
+            0,
+            0,
+            0.723332 * scalingFactor,
+            0.006772,
+            THREE.MathUtils.degToRad(54.884),
+            THREE.MathUtils.degToRad(3.86),
+            THREE.MathUtils.degToRad(76.680),
+            0,
+            this.planets.venus.mesh
+        )
+        this.scene.add(this.orbits.venus.threeObject)
+        this.orbits.earth = new EllipticalTrajectory(
+            0,
+            0,
+            1.0000010178 * scalingFactor,
+            0.0167086,
+            THREE.MathUtils.degToRad(228.1),
+            THREE.MathUtils.degToRad(7.155),
+            THREE.MathUtils.degToRad(174.9),
+            0,
+            this.planets.earth.mesh
+        )
+        this.scene.add(this.orbits.earth.threeObject)
     }
 
 
@@ -211,8 +252,8 @@ export default class Application
         this.camera = new THREE.PerspectiveCamera(
             45, // fov
             window.innerWidth / window.innerHeight, // aspect ratio
-            0.1, // near clipping cutoff
-            1000 // far clipping cutoff
+            0.01, // near clipping cutoff
+            10000 // far clipping cutoff
         );
         this.camera.position.set(-90, 140, 140);
 
@@ -222,8 +263,13 @@ export default class Application
 
         // Planets
         this.planets = this.generateStandardPlanets()
+        this.generateOrbitLines()
         // Sun
         this.planets.sun = this.createSun()
+
+
+        // Planet Selection
+        const selection = [this.planets.earth.mesh]
 
         // Lighting
         /*const pointLight = new THREE.PointLight(0xFFFFFF, 2, 300)
@@ -289,20 +335,15 @@ export default class Application
         this.composer.addPass(this.passes.render)
         this.passes.list.push(this.passes.render)
 
-        this.passes.smaa = new EffectPass(this.camera, new SMAAEffect(this.resources.searchImage, this.resources.areaImage))
-        this.passes.smaa.enabled = window.devicePixelRatio <= 1
-        this.composer.addPass(this.passes.smaa)
-        this.passes.list.push(this.passes.smaa)
-
-        /*this.passes.bloom = new EffectPass(this.camera, new BloomEffect())
+        this.passes.bloom = new EffectPass(this.camera, new BloomEffect())
         this.passes.bloom.enabled = true
         this.composer.addPass(this.passes.bloom)
-        this.passes.list.push(this.passes.bloom)*/
+        this.passes.list.push(this.passes.bloom)
 
-
+        // sun godray effect
 		const godRaysEffect = new GodRaysEffect(this.camera, this.planets.sun, {
-			height: 480,
-			kernelSize: KernelSize.SMALL,
+			height: 1080,
+			kernelSize: KernelSize.MEDIUM,
 			density: 0.96,
 			decay: 0.92,
 			weight: 0.3,
@@ -311,9 +352,32 @@ export default class Application
 			clampMax: 1.0
 		});
         this.passes.godray = new EffectPass(this.camera, godRaysEffect)
-        this.passes.godray.enabled = true
+        this.passes.godray.enabled = false
         this.composer.addPass(this.passes.godray)
         this.passes.list.push(this.passes.godray)
+
+        // planet outlining
+		const outlineEffect = new OutlineEffect(this.scene, this.camera, {
+			blendFunction: BlendFunction.SCREEN,
+			edgeStrength: 2.5,
+			pulseSpeed: 0.0,
+			visibleEdgeColor: 0xffffff,
+			hiddenEdgeColor: 0x22090a,
+			height: 1080,
+			blur: false,
+			xRay: true
+		});
+		outlineEffect.selection.set(selection);
+        this.passes.outline = new EffectPass(this.camera, outlineEffect)
+        this.passes.outline.enabled = true
+        this.composer.addPass(this.passes.outline)
+        this.passes.list.push(this.passes.outline)
+
+        // smaa antialiasing
+        this.passes.smaa = new EffectPass(this.camera, new SMAAEffect(this.resources.searchImage, this.resources.areaImage))
+        this.passes.smaa.enabled = window.devicePixelRatio <= 1
+        this.composer.addPass(this.passes.smaa)
+        this.passes.list.push(this.passes.smaa)
 
         this.passes.updateRenderToScreen()
 
@@ -326,8 +390,9 @@ export default class Application
                 this.composer.render(this.scene, this.camera)
 
                 //Self-rotation
-                let scale = 0.01
-                this.planets.sun.rotateY(0.004 * scale);
+                let scale = 0.1
+
+                /*this.planets.sun.rotateY(0.004 * scale);
                 this.planets.mercury.mesh.rotateY(0.004 * scale);
                 this.planets.venus.mesh.rotateY(0.002 * scale);
                 this.planets.earth.mesh.rotateY(0.02 * scale);
@@ -347,7 +412,10 @@ export default class Application
                 this.planets.saturn.obj.rotateY(0.0009 * scale);
                 this.planets.uranus.obj.rotateY(0.0004 * scale);
                 this.planets.neptune.obj.rotateY(0.0001 * scale);
-                this.planets.pluto.obj.rotateY(0.00007 * scale);
+                this.planets.pluto.obj.rotateY(0.00007 * scale);*/
+                this.orbits.mercury.decrementTrueAnomaly(0.04 * scale)
+                this.orbits.venus.decrementTrueAnomaly(0.015 * scale)
+                this.orbits.earth.decrementTrueAnomaly(0.01 * scale)
             }
             else
             {
