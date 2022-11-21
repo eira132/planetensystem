@@ -7,6 +7,7 @@ import Sizes from './Utils/Sizes.js'
 import Time from './Utils/Time.js'
 
 import Planets from './Utils/Planets.js';
+import { LoadingManager } from 'three';
 
 export default class Application
 {
@@ -23,6 +24,12 @@ export default class Application
         this.time = new Time()
         this.sizes = new Sizes()
         this.planets = new Planets()
+
+        this.date = new Date()
+        this.updateInterval = 'realtime'
+
+        // Bind controls
+        this.bindEventListeners()
 
         // Load resources
         this.resources = {}
@@ -144,6 +151,24 @@ export default class Application
 
         return sun
     }
+    /**
+     * Bind event listeners
+     */
+    bindEventListeners() {
+        document.getElementById('realtime').addEventListener('click', this.handleSpeedChange.bind(this))
+        document.getElementById('hps').addEventListener('click', this.handleSpeedChange.bind(this))
+        document.getElementById('dps').addEventListener('click', this.handleSpeedChange.bind(this))
+        document.getElementById('mps').addEventListener('click', this.handleSpeedChange.bind(this))
+        document.getElementById('yps').addEventListener('click', this.handleSpeedChange.bind(this))
+        document.getElementById('Dps').addEventListener('click', this.handleSpeedChange.bind(this))
+    }
+    handleSpeedChange(e) {
+        this.updateInterval = e.target.id
+        document.querySelectorAll('.active').forEach(elem => {
+            elem.classList.remove('active')
+        })
+        e.target.classList.add('active')
+    }
 
     /**
      * Set environments
@@ -178,22 +203,25 @@ export default class Application
         this.planets.sun = this.createSun()
 
         // Background
+        /*const textureLoader = new THREE.TextureLoader()
+        const starsTexture = textureLoader.load('http://localhost:1234/textures/stars.jpg')
         const cubeTextureLoader = new THREE.CubeTextureLoader();
         this.scene.background = cubeTextureLoader.load([
-            this.resources.textures.starsTexture,
-            this.resources.textures.starsTexture,
-            this.resources.textures.starsTexture,
-            this.resources.textures.starsTexture,
-            this.resources.textures.starsTexture,
-            this.resources.textures.starsTexture
-        ]);
+            starsTexture,
+            starsTexture,
+            starsTexture,
+            starsTexture,
+            starsTexture,
+            starsTexture
+        ]);*/
+        console.log(this.resources)
 
         // Planet Selection
         this.selection = []
 
         // Lighting
-		//const ambientLight = new THREE.AmbientLight(0x101010);
-		const ambientLight = new THREE.AmbientLight(0xffffff)
+		const ambientLight = new THREE.AmbientLight(0x101010);
+		//const ambientLight = new THREE.AmbientLight(0xffffff)
 
 		const mainLight = new THREE.PointLight(0xffe3b1)
 		mainLight.position.set(0, 0, 0)
@@ -223,10 +251,8 @@ export default class Application
         // Postprocessing effect
         this.initShaders()
 
-        this.date = new Date()
-        this.updateInterval = 'hps'
 
-        // Time tick
+        // Time tick (render loop)
         this.time.on('tick', () =>
         {
             // Renderer
@@ -234,22 +260,25 @@ export default class Application
             {
                 this.composer.render(this.scene, this.camera)
 
-                document.getElementById('dateDisplay').innerText = this.date.toISOString()
-
-                /*this.planets.updatePlanetAnomaly(this.date, 'mercury')
-                this.planets.updatePlanetAnomaly(this.date, 'venus')
-                this.planets.updatePlanetAnomaly(this.date, 'earth')
-                this.planets.updatePlanetAnomaly(this.date, 'mars')
-                this.planets.updatePlanetAnomaly(this.date, 'jupiter')
-                this.planets.updatePlanetAnomaly(this.date, 'saturn')
-                this.planets.updatePlanetAnomaly(this.date, 'uranus')
-                this.planets.updatePlanetAnomaly(this.date, 'neptune')
+                let options = {timezone: "UTC", weekday: "long", year: "numeric", month: "long", day: "numeric"}
+                let localdate = this.date.toLocaleDateString([], options)
+                let localtime = this.date.toLocaleTimeString([], {timezone: "UTC"})
+                let html =  `<div id="datestring"><h1>${localdate}</h1></div> <div id="timestring"><h2>${localtime}</h2></div>`
+                document.getElementById('dateDisplay').innerHTML = html
+                
+                this.planets.updateStandardPlanets(this.date)
 
                 // simulation speed
                 let percent = this.time.delta/1000 // percentage to the next whole division
                 let current = this.date.getTime()
-                let division = 3600 * 1000 // 1 hour in ms 
+                let division = 1000 // real time, 1s per 1000ms
                 switch(this.updateInterval) {
+                    case "cps":
+                        division = 3155760000000 // 1 century in ms 
+                    case "Dps":
+                        division = 315576000000 // 10 years in ms
+                    case "yps":
+                        division = 31557600000 // 1 year in ms
                     case "mps":
                         division = 2629800000 // 1 month in ms
                         break;
@@ -259,8 +288,13 @@ export default class Application
                     case "dps":
                         division = 86400000 // 1 day in ms
                         break;
+                    case "hps":
+                        division = 3600 * 1000 // 1 hour in ms 
+                    case "realtime":
+                        division = 1000 // real time, 1s in ms
+                        break;
                 }
-                this.date.setTime(current + division * percent)*/
+                this.date.setTime(current + division * percent)
                 this.time.stop()
             }
             else
@@ -342,7 +376,7 @@ export default class Application
 			clampMax: 1.0
 		});
         this.passes.godray = new EffectPass(this.camera, godRaysEffect)
-        this.passes.godray.enabled = false
+        this.passes.godray.enabled = true
         this.composer.addPass(this.passes.godray)
         this.passes.list.push(this.passes.godray)
 

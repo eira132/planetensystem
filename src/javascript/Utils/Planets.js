@@ -79,4 +79,15 @@ export default class Planets extends OrbitingObject {
         this.orbits[planet].updateTrueAnomaly(THREE.MathUtils.degToRad(v))
     }
 
+    updateStandardPlanets(date) {
+        this.updatePlanetAnomaly(date, 'mercury')
+        this.updatePlanetAnomaly(date, 'venus')
+        this.updatePlanetAnomaly(date, 'earth')
+        this.updatePlanetAnomaly(date, 'mars')
+        this.updatePlanetAnomaly(date, 'jupiter')
+        this.updatePlanetAnomaly(date, 'saturn')
+        this.updatePlanetAnomaly(date, 'uranus')
+        this.updatePlanetAnomaly(date, 'neptune')
+    }
+
 }
