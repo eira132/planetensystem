@@ -295,7 +295,7 @@ export default class Application
                         break;
                 }
                 this.date.setTime(current + division * percent)
-                this.time.stop()
+                //this.time.stop()
             }
             else
             {
