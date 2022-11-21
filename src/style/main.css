@@ -13,7 +13,7 @@
 }
 @font-face {
     font-family: "Chakra Petch";
-    src: url("./Chakra_Petch/ChakraPetch-Italic.ttf");
+    src: url("./Chakra_Petch/ChakraPetch-Regular.ttf");
     font-weight: normal;
     font-style: italic;
 }
@@ -26,8 +26,9 @@
 }
 
 body {
-    font-family: 'Chakra_Petch', sans-serif;
+    font-family: 'Chakra Petch', sans-serif;
     color: #fffd;
+    background-color: #010101;
 }
 
 h1, h2, h3, h4, h5 {
@@ -36,10 +37,25 @@ h1, h2, h3, h4, h5 {
     transition: color 0.2s linear;
 }
 
-/* --- ids --- */
-#timestring {
-    margin-top: -0.4rem;
+input[type=number] {
+    width: 5rem;
+    margin: 0.2rem 0.6rem;
+    padding: 0.2rem 0 0.2rem 0.6rem;
+
+    color: #fff;
+    font-family: inherit;
+    font-size: 1.2rem;
+    
+    background-color: #0000;
+    border: 2px solid #fff8;
+    border-radius: 0.6rem;
 }
+
+label {
+    font-size: 1.2rem;
+}
+
+/* --- ids --- */
 
 /* --- classes --- */
 .canvas {
@@ -48,6 +64,21 @@ h1, h2, h3, h4, h5 {
     left: 0;
     width: 100%;
     height: 100%;
+    background-color: #0000;
+    z-index: 1;
+}
+
+.loading-wrapper {
+    width: 100vw;
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.loading-wrapper h1 {
+    font-size: 5rem;
 }
 
 .time-tray {
@@ -55,13 +86,14 @@ h1, h2, h3, h4, h5 {
     top: 0;
     right: 0;
     width: fit-content;
+    z-index: 2;
 
     padding: 0.3rem 0.5rem 1rem 1.4rem;
 
     display: flex;
     flex-direction: column;
 
-    background-color: #fff0;
+    background-color: #0008;
     border-radius: 0 0 0 0.6rem;
     border: 2px solid #fff2;
     border-right: none;
@@ -71,13 +103,10 @@ h1, h2, h3, h4, h5 {
                 border-color 0.2s linear;
 }
 .time-tray:hover {
-    background-color: #fff1;
+    background-color: #000e;
     border: 2px solid #fff2;
     border-right: none;
     border-top: none;
-}
-.time-tray:hover h2 {
-    color: #fffa;
 }
 
 
@@ -86,6 +115,16 @@ h1, h2, h3, h4, h5 {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
+}
+
+.timestring {
+    margin-top: -0.4rem;
+}
+.datestring {
+    cursor: pointer
+}
+.datestring:hover h1 {
+    color: #ffff;
 }
 
 
@@ -142,7 +181,8 @@ h1, h2, h3, h4, h5 {
     position: absolute;
     bottom: 0;
     left: 0;
-    padding: 0.3rem 0.6rem;
+    padding: 0.6rem;
+    z-index: 1;
 
     display: flex;
     flex-direction: column;
@@ -155,4 +195,45 @@ h1, h2, h3, h4, h5 {
 
     transition: background-color 0.2s linear,
                 border-color 0.2s linear;
+}
+.control-tray:hover {
+    background-color: #000e;
+}
+
+/* --- css spinner from https://loading.io/css/ --- */
+.lds-facebook {
+  display: inline-block;
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+.lds-facebook div {
+  display: inline-block;
+  position: absolute;
+  left: 8px;
+  width: 16px;
+  background: #fff8;
+  animation: lds-facebook 1.2s cubic-bezier(0, 0.5, 0.5, 1) infinite;
+}
+.lds-facebook div:nth-child(1) {
+  left: 8px;
+  animation-delay: -0.24s;
+}
+.lds-facebook div:nth-child(2) {
+  left: 32px;
+  animation-delay: -0.12s;
+}
+.lds-facebook div:nth-child(3) {
+  left: 56px;
+  animation-delay: 0;
+}
+@keyframes lds-facebook {
+  0% {
+    top: 8px;
+    height: 64px;
+  }
+  50%, 100% {
+    top: 24px;
+    height: 32px;
+  }
 }

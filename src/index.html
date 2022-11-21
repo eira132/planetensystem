@@ -10,8 +10,19 @@
 <body>
     <canvas class="canvas js-canvas"></canvas>
     <script src="./javascript/index.js" type="module"></script>
+    <div class="loading-wrapper">
+        <h1>Planetensystem</h1>
+        <div class="lds-facebook"><div></div><div></div><div></div></div>
+    </div>
     <div class="time-tray">
-        <div id="dateDisplay" class="date"></div>
+        <div id="dateDisplay" class="date">
+            <div class="datestring">
+                <h1 id="datestring"></h1>
+            </div>
+            <div class="timestring">
+                <h2 id="timestring"></h2>
+            </div>
+        </div>
         <div class="speed-control">
             <!-- bootstrap play-fill icon from https://icons.getbootstrap.com/ -->
             <div class="speed-option active" id="realtime">
@@ -92,7 +103,15 @@
         </div>
     </div>
     <div class="control-tray">
-        <h2>Optionen</h2>
+        <h1>Optionen</h1>
+        <label for="planetSize">
+            Planetenskalierung
+            <input type="number" name="planetSize" id="planetSize" value="3" min="1" max="9">
+        </label>
+        <label for="orbitSize">
+            Umlaufbahnskalierung
+            <input type="number" name="orbitSize" id="orbitSize" value="100" step="10" min="10" max="1000">
+        </label>
     </div>
 </body>
 </html>
