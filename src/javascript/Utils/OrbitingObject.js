@@ -1,8 +1,8 @@
 import * as THREE from 'three'
 
-import EllipticalTrajectory from './EllipticalTrajectory.js'
+import EllipticalTrajectory from './ellipticalTrajectory.js'
 
-export default class OrbitingObject {
+export default class orbitingObject {
     /**
      * Constructor
      */

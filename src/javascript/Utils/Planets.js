@@ -1,9 +1,9 @@
 import * as THREE from 'three'
 
-import OrbitingObject from "./OrbitingObject";
-import orbit from './OrbitalElements.js'
+import orbitingObject from "./orbitingObject";
+import orbit from './orbitalElements.js'
 
-export default class Planets extends OrbitingObject {
+export default class planets extends orbitingObject {
     /**
      * Constructor
      */

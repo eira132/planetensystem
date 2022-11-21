@@ -3,12 +3,11 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { EffectComposer, RenderPass, EffectPass, SMAAEffect, BloomEffect, GodRaysEffect, KernelSize, OutlineEffect, BlendFunction } from 'postprocessing'
 import * as dat from 'dat.gui'
 
-import Sizes from './Utils/Sizes.js'
-import Time from './Utils/Time.js'
+import sizes from './Utils/sizes.js'
+import time from './Utils/time.js'
+import planets from './Utils/planets.js';
 
-import Planets from './Utils/Planets.js';
-import { LoadingManager } from 'three';
-
+//import planetInfo from './planetInfo.json'
 
 /**
  * Normalized device coordinates.
@@ -30,9 +29,9 @@ export default class Application
         this.useComposer = _options.useComposer
 
         // Set up
-        this.time = new Time()
-        this.sizes = new Sizes()
-        this.planets = new Planets()
+        this.time = new time()
+        this.sizes = new sizes()
+        this.planets = new planets()
 
         this.date = new Date()
         this.updateInterval = 'realtime'
