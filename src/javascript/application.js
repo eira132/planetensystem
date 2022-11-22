@@ -7,6 +7,8 @@ import sizes from './Utils/sizes.js'
 import time from './Utils/time.js'
 import planets from './Utils/planets.js';
 
+const UrlBase = 'http://localhost:1234' //'https://cgf-planeten.web.app'
+
 import planetInfo from './planetInfo.json'
 
 /**
@@ -144,7 +146,7 @@ export default class Application
             let target = list.length
             for (let i = 0; i < list.length; i++) {
                 // create url dependency
-                let imgURL = new URL(list[i].url, import.meta.url)
+                let imgURL = new URL(list[i].url, UrlBase)
                 // load the texture using three's loader
                 let loader = new THREE.TextureLoader()
                 loader.load(imgURL, (texture) => {
@@ -335,6 +337,7 @@ export default class Application
             starsTexture,
             starsTexture
         ]);*/
+        console.log(this.resources)
 
         // Lighting
 		const ambientLight = new THREE.AmbientLight(0x101010);
@@ -417,7 +420,7 @@ export default class Application
 
                 this.planets.updateStandardPlanets(this.date, division * percent)
                 
-                //this.time.stop()
+                this.time.stop()
             }
             else
             {

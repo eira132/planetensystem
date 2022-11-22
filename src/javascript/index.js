@@ -1,4 +1,4 @@
-import Application from './Application.js'
+import Application from './application.js'
 
 window.application = new Application({
     $canvas: document.querySelector('.js-canvas'),
